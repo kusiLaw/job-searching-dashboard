@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Search Dashboard</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#ffffff;--bg2:#f6f5f1;--bg3:#edecea;
+  --text:#1a1a18;--text2:#6b6b67;--text3:#a0a09c;
+  --border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.20);
+  --r-sm:6px;--r-md:8px;--r-lg:12px;--r-xl:16px;
+  --blue-bg:#E6F1FB;--blue-text:#0C447C;--blue-border:#185FA5;
+  --danger:#A32D2D;--danger-bg:#FCEBEB;
+  --followup-bg:#FAC775;--followup-text:#633806;
+  --shadow:0 1px 4px rgba(0,0,0,0.08);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1e1e1c;--bg2:#272725;--bg3:#303030;
+    --text:#f0efe8;--text2:#9e9e9a;--text3:#6b6b67;
+    --border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.22);
+    --blue-bg:#042C53;--blue-text:#B5D4F4;--blue-border:#378ADD;
+    --danger:#F09595;--danger-bg:#501313;
+    --followup-bg:#633806;--followup-text:#FAC775;
+  }
+}
+
+body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+.container{max-width:1280px;margin:0 auto;padding:28px 24px}
+
+/* Header */
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.header-left h1{font-size:20px;font-weight:600;letter-spacing:-0.3px}
+.header-left p{font-size:13px;color:var(--text2);margin-top:3px}
+
+/* Metric cards */
+.stats-bar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px}
+.metric{background:var(--bg2);border-radius:var(--r-md);padding:14px 16px;border:0.5px solid var(--border)}
+.metric-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.metric-value{font-size:22px;font-weight:600;letter-spacing:-0.5px}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:0.5px solid var(--border);padding-bottom:0}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 16px 10px;font-size:13px;cursor:pointer;color:var(--text2);font-family:inherit;transition:color 0.15s;margin-bottom:-0.5px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--text);font-weight:500;border-bottom-color:var(--text)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--r-md);padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--text);transition:background 0.12s,transform 0.1s}
+.btn:hover{background:var(--bg2)}
+.btn:active{transform:scale(0.98)}
+.btn-primary{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-border)}
+.btn-primary:hover{opacity:0.88}
+.btn-danger{color:var(--danger);border-color:var(--danger-bg)}
+
+/* Badges */
+.badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;font-weight:500;white-space:nowrap;line-height:1.6}
+.badge-Saved{background:#D3D1C7;color:#2C2C2A}
+.badge-Applied{background:#B5D4F4;color:#0C447C}
+.badge-Phone.Screen{background:#FAC775;color:#633806}
+.badge-Interview{background:#CECBF6;color:#3C3489}
+.badge-Offer{background:#C0DD97;color:#27500A}
+.badge-Rejected{background:#F7C1C1;color:#791F1F}
+.badge-followup{background:var(--followup-bg);color:var(--followup-text)}
+
+/* Kanban */
+.kanban-wrap{display:flex;gap:10px;overflow-x:auto;padding-bottom:12px}
+.kol{flex:0 0 200px;background:var(--bg2);border-radius:var(--r-lg);padding:10px;border:0.5px solid var(--border);transition:outline 0.1s}
+.kol.drag-over{outline:2px solid var(--blue-border)}
+.kol-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.kol-count{font-size:12px;color:var(--text2);font-weight:500}
+.jcard{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:11px 13px;margin-bottom:8px;cursor:pointer;transition:box-shadow 0.15s,border-color 0.15s}
+.jcard:hover{box-shadow:var(--shadow);border-color:var(--border2)}
+.jcard-company{font-size:13px;font-weight:600;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jcard-role{font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jcard-meta{font-size:11px;color:var(--text3);margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border)}
+.jcard-followup{margin-top:6px}
+
+/* List / Table */
+.list-controls{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.list-controls input,.list-controls select{padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--r-md);font-size:13px;background:var(--bg);color:var(--text);font-family:inherit;outline:none}
+.list-controls input{min-width:220px;flex:1}
+.list-controls input:focus,.list-controls select:focus{border-color:var(--blue-border);box-shadow:0 0 0 3px rgba(56,138,221,0.15)}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{border-bottom:0.5px solid var(--border2)}
+th{text-align:left;padding:9px 10px;font-weight:500;color:var(--text2);white-space:nowrap;user-select:none;cursor:pointer}
+th:hover{color:var(--text)}
+th.sorted{color:var(--text)}
+th .sort-arrow{font-size:10px;margin-left:3px;opacity:0.6}
+td{padding:10px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+tbody tr:hover td{background:var(--bg2)}
+tbody tr:last-child td{border-bottom:none}
+.td-company{font-weight:500;white-space:nowrap}
+.td-role{color:var(--text2)}
+.td-salary{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.td-date{white-space:nowrap;color:var(--text2)}
+.td-notes{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
+.td-link a{color:var(--blue-text);font-size:12px;text-decoration:none}
+.td-link a:hover{text-decoration:underline}
+.td-actions{white-space:nowrap}
+.row-btn{background:none;border:none;cursor:pointer;font-size:12px;padding:3px 7px;border-radius:4px;font-family:inherit;color:var(--text2)}
+.row-btn:hover{background:var(--bg3);color:var(--text)}
+.row-btn.danger{color:var(--danger)}
+.empty-state{text-align:center;padding:3rem;color:var(--text2)}
+
+/* Stats view */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.chart-box{background:var(--bg2);border-radius:var(--r-lg);padding:16px;border:0.5px solid var(--border)}
+.chart-title{font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px}
+.chart-wrap{position:relative}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;justify-content:center;align-items:flex-start;padding:40px 16px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--r-xl);border:0.5px solid var(--border2);width:100%;max-width:520px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{background:none;border:none;cursor:pointer;font-size:22px;line-height:1;color:var(--text2);padding:2px 6px;border-radius:4px}
+.modal-close:hover{background:var(--bg2)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.form-grid .full{grid-column:1/-1}
+.field{margin-top:12px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--r-md);font-size:13px;background:var(--bg);color:var(--text);font-family:inherit;outline:none;transition:border-color 0.12s,box-shadow 0.12s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue-border);box-shadow:0 0 0 3px rgba(56,138,221,0.15)}
+.field .hint{font-size:11px;color:var(--text3);margin-top:3px}
+.form-err{color:var(--danger);font-size:12px;margin-top:10px;display:none}
+.modal-footer{display:flex;align-items:center;gap:8px;margin-top:20px;padding-top:16px;border-top:0.5px solid var(--border)}
+.modal-footer .spacer{flex:1}
+
+/* Responsive */
+@media(max-width:700px){
+  .stats-bar{grid-template-columns:1fr 1fr}
+  .stats-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .form-grid .full{grid-column:auto}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>Job Search</h1>
+      <p id="subtitle">Loading…</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal(null)">+ Add job</button>
+  </div>
+
+  <!-- Metric cards -->
+  <div class="stats-bar" id="stats-bar"></div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" id="t-kanban" onclick="setView('kanban')">Board</button>
+    <button class="tab" id="t-table" onclick="setView('table')">List</button>
+    <button class="tab" id="t-stats" onclick="setView('stats')">Stats</button>
+  </div>
+
+  <!-- Kanban -->
+  <div id="v-kanban"><div class="kanban-wrap" id="kanban-inner"></div></div>
+
+  <!-- List -->
+  <div id="v-table" style="display:none">
+    <div class="list-controls">
+      <input type="text" id="search-input" placeholder="Search company or role…" oninput="filterTable()">
+      <select id="status-filter" onchange="filterTable()">
+        <option value="">All statuses</option>
+        <option>Saved</option><option>Applied</option><option>Phone Screen</option>
+        <option>Interview</option><option>Offer</option><option>Rejected</option>
+      </select>
+      <select id="followup-filter" onchange="filterTable()">
+        <option value="">All jobs</option>
+        <option value="followup">Needs follow-up only</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table id="job-table">
+        <thead>
+          <tr>
+            <th onclick="sortBy('company')">Company <span class="sort-arrow" id="arr-company"></span></th>
+            <th onclick="sortBy('role')">Role <span class="sort-arrow" id="arr-role"></span></th>
+            <th onclick="sortBy('status')">Status <span class="sort-arrow" id="arr-status"></span></th>
+            <th onclick="sortBy('salary')" style="text-align:right">Salary <span class="sort-arrow" id="arr-salary"></span></th>
+            <th onclick="sortBy('appDate')">Applied <span class="sort-arrow" id="arr-appDate"></span></th>
+            <th onclick="sortBy('intDate')">Interview <span class="sort-arrow" id="arr-intDate"></span></th>
+            <th>Follow-up</th>
+            <th>Link</th>
+            <th>Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div id="v-stats" style="display:none">
+    <div class="stats-grid">
+      <div class="chart-box">
+        <p class="chart-title">Pipeline by status</p>
+        <div class="chart-wrap" style="height:260px"><canvas id="c-status"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <p class="chart-title">Salary comparison (£)</p>
+        <div class="chart-wrap" id="salary-chart-wrap" style="height:260px"><canvas id="c-salary"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end container -->
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="overlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-title">Add job</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Company *</label><input id="f-company" placeholder="e.g. Stripe"></div>
+      <div class="field"><label>Role *</label><input id="f-role" placeholder="e.g. Frontend Engineer"></div>
+      <div class="field"><label>Status</label>
+        <select id="f-status">
+          <option>Saved</option><option>Applied</option><option>Phone Screen</option>
+          <option>Interview</option><option>Offer</option><option>Rejected</option>
+        </select>
+      </div>
+      <div class="field"><label>Salary (£)</label><input id="f-salary" type="number" placeholder="75000"></div>
+      <div class="field"><label>Applied date</label><input id="f-appdate" type="date"></div>
+      <div class="field"><label>Interview date</label><input id="f-intdate" type="date"></div>
+      <div class="field full">
+        <label>Job post URL</label>
+        <input id="f-link" type="url" placeholder="https://jobs.company.com/role-id">
+        <p class="hint">Paste the link to the original job posting</p>
+      </div>
+      <div class="field full"><label>Notes</label><textarea id="f-notes" rows="3" placeholder="Recruiter name, referral, impressions…"></textarea></div>
+    </div>
+    <div class="form-err" id="form-err"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="delete-btn" onclick="deleteCurrentJob()" style="display:none">Delete</button>
+      <div class="spacer"></div>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveJob()">Save job</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+const STATUSES = ['Saved','Applied','Phone Screen','Interview','Offer','Rejected'];
+const FOLLOWUP_DAYS = 14; // days after applying before follow-up flag appears
+const SS = {
+  'Saved':       {bg:'#D3D1C7',c:'#2C2C2A'},
+  'Applied':     {bg:'#B5D4F4',c:'#0C447C'},
+  'Phone Screen':{bg:'#FAC775',c:'#633806'},
+  'Interview':   {bg:'#CECBF6',c:'#3C3489'},
+  'Offer':       {bg:'#C0DD97',c:'#27500A'},
+  'Rejected':    {bg:'#F7C1C1',c:'#791F1F'}
+};
+const CHART_COLORS = ['#B4B2A9','#85B7EB','#EF9F27','#AFA9EC','#97C459','#F09595'];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let jobs = [];
+let editId = null;
+let currentView = 'kanban';
+let draggingId = null;
+let sortCol = 'appDate';
+let sortDir = -1; // -1 = desc
+let charts = [];
+
+// ─── Storage (localStorage for local use) ────────────────────────────────────
+function loadJobs() {
+  try {
+    const raw = localStorage.getItem('jsd-v2-jobs');
+    jobs = raw ? JSON.parse(raw) : sampleJobs();
+  } catch(e) { jobs = sampleJobs(); }
+  render();
+}
+
+function saveJobs() {
+  try { localStorage.setItem('jsd-v2-jobs', JSON.stringify(jobs)); } catch(e) {}
+}
+
+function sampleJobs() {
+  const today = new Date();
+  const daysAgo = n => { const d = new Date(today); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); };
+  return [
+    {id:'s1',company:'Stripe',role:'Frontend Engineer',status:'Interview',salary:92000,appDate:daysAgo(18),intDate:daysAgo(3),notes:'Referral from ex-colleague. 3 stages.',link:'https://stripe.com/jobs'},
+    {id:'s2',company:'Monzo',role:'Full Stack Developer',status:'Applied',salary:82000,appDate:daysAgo(20),intDate:'',notes:'Applied via jobs board',link:'https://monzo.com/careers'},
+    {id:'s3',company:'Revolut',role:'React Developer',status:'Applied',salary:88000,appDate:daysAgo(16),intDate:'',notes:'Recruiter reached out on LinkedIn',link:''},
+    {id:'s4',company:'Deliveroo',role:'Software Engineer',status:'Saved',salary:78000,appDate:'',intDate:'',notes:'Check JD again before applying',link:''},
+    {id:'s5',company:'Wise',role:'Senior Frontend',status:'Rejected',salary:95000,appDate:daysAgo(30),intDate:daysAgo(22),notes:'Good feedback – overqualified',link:'https://wise.com/careers'},
+    {id:'s6',company:'Checkout.com',role:'UI Engineer',status:'Phone Screen',salary:85000,appDate:daysAgo(8),intDate:'',notes:'',link:''}
+  ];
+}
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(d) {
+  if(!d) return '';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y.slice(2)}`;
+}
+function daysSince(dateStr) {
+  if(!dateStr) return null;
+  const diff = Date.now() - new Date(dateStr).getTime();
+  return Math.floor(diff / 86400000);
+}
+function needsFollowUp(job) {
+  return job.status === 'Applied' && job.appDate && !job.intDate && daysSince(job.appDate) >= FOLLOWUP_DAYS;
+}
+function badge(status) {
+  const st = SS[status] || {bg:'#D3D1C7',c:'#2C2C2A'};
+  return `<span class="badge" style="background:${st.bg};color:${st.c}">${esc(status)}</span>`;
+}
+function followUpBadge(job) {
+  if(!needsFollowUp(job)) return '<span style="color:var(--text3);font-size:12px">—</span>';
+  const d = daysSince(job.appDate);
+  return `<span class="badge badge-followup" title="Applied ${d} days ago, no reply yet">Follow up ·&nbsp;${d}d</span>`;
+}
+
+// ─── Render: metric cards ─────────────────────────────────────────────────────
+function renderMetrics() {
+  const total = jobs.length;
+  const active = jobs.filter(j => !['Rejected','Offer'].includes(j.status)).length;
+  const offers = jobs.filter(j => j.status === 'Offer').length;
+  const sals = jobs.filter(j => j.salary).map(j => +j.salary);
+  const avg = sals.length ? Math.round(sals.reduce((a,b)=>a+b,0)/sals.length) : 0;
+  const followups = jobs.filter(needsFollowUp).length;
+
+  document.getElementById('stats-bar').innerHTML = [
+    ['Total applications', total],
+    ['Active', active],
+    ['Offers', offers],
+    ['Avg salary', avg ? '£'+avg.toLocaleString() : '—'],
+  ].map(([l,v]) => `<div class="metric"><p class="metric-label">${l}</p><p class="metric-value">${v}</p></div>`).join('')
+  + (followups ? `<div class="metric" style="border-color:var(--followup-bg);background:var(--followup-bg)"><p class="metric-label" style="color:var(--followup-text)">Need follow-up</p><p class="metric-value" style="color:var(--followup-text)">${followups}</p></div>` : '');
+
+  document.getElementById('subtitle').textContent = `${total} application${total!==1?'s':''}`;
+}
+
+// ─── Render: Kanban ───────────────────────────────────────────────────────────
+function renderKanban() {
+  const by = {};
+  STATUSES.forEach(s => by[s] = []);
+  jobs.forEach(j => { if(by[j.status]) by[j.status].push(j); });
+
+  document.getElementById('kanban-inner').innerHTML = STATUSES.map(s => {
+    const st = SS[s] || {bg:'#D3D1C7',c:'#2C2C2A'};
+    return `<div class="kol" id="kol-${s.replace(/ /g,'_')}"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="dropJob(event,'${s}')">
+      <div class="kol-header">
+        <span class="badge" style="background:${st.bg};color:${st.c}">${s}</span>
+        <span class="kol-count">${by[s].length}</span>
+      </div>
+      ${by[s].map(j => {
+        const fu = needsFollowUp(j);
+        return `<div class="jcard" draggable="true" ondragstart="dragStart(event,'${j.id}')" onclick="openModal('${j.id}')">
+          <p class="jcard-company">${esc(j.company)}</p>
+          <p class="jcard-role">${esc(j.role)}</p>
+          ${j.salary || j.intDate || fu ? `<div class="jcard-meta">
+            ${j.salary ? `<span>£${Number(j.salary).toLocaleString()}</span>` : ''}
+            ${j.intDate ? `<span style="margin-left:${j.salary?'8px':'0'}">📅 ${fmtDate(j.intDate)}</span>` : ''}
+            ${fu ? `<div class="jcard-followup"><span class="badge badge-followup" style="font-size:10px">Follow up · ${daysSince(j.appDate)}d</span></div>` : ''}
+          </div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+function dragStart(e, id) { draggingId = id; e.dataTransfer.effectAllowed = 'move'; }
+function dropJob(e, status) {
+  e.currentTarget.classList.remove('drag-over');
+  if(!draggingId) return;
+  const j = jobs.find(x => x.id === draggingId);
+  if(j && j.status !== status) { j.status = status; saveJobs(); render(); }
+  draggingId = null;
+}
+
+// ─── Render: List / Table ─────────────────────────────────────────────────────
+function getFilteredJobs() {
+  const q = document.getElementById('search-input').value.toLowerCase().trim();
+  const st = document.getElementById('status-filter').value;
+  const fu = document.getElementById('followup-filter').value;
+
+  let list = [...jobs];
+  if(q) list = list.filter(j => j.company.toLowerCase().includes(q) || j.role.toLowerCase().includes(q));
+  if(st) list = list.filter(j => j.status === st);
+  if(fu === 'followup') list = list.filter(needsFollowUp);
+
+  // Sort
+  list.sort((a,b) => {
+    let av = a[sortCol]||'', bv = b[sortCol]||'';
+    if(sortCol === 'salary') { av = +av||0; bv = +bv||0; }
+    if(av < bv) return -1 * sortDir;
+    if(av > bv) return 1 * sortDir;
+    return 0;
+  });
+  return list;
+}
+
+function renderTable() {
+  const list = getFilteredJobs();
+  const tbody = document.getElementById('table-body');
+  if(!list.length) {
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-state">No jobs match your filters.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(j => `
+    <tr>
+      <td class="td-company">${esc(j.company)}</td>
+      <td class="td-role">${esc(j.role)}</td>
+      <td>${badge(j.status)}</td>
+      <td class="td-salary">${j.salary ? '£'+Number(j.salary).toLocaleString() : '—'}</td>
+      <td class="td-date">${j.appDate ? fmtDate(j.appDate) : '—'}</td>
+      <td class="td-date">${j.intDate ? fmtDate(j.intDate) : '—'}</td>
+      <td>${followUpBadge(j)}</td>
+      <td class="td-link">${j.link ? `<a href="${esc(j.link)}" target="_blank" rel="noopener">View post ↗</a>` : '<span style="color:var(--text3);font-size:12px">—</span>'}</td>
+      <td class="td-notes" title="${esc(j.notes||'')}">${esc(j.notes||'') || '<span style="color:var(--text3)">—</span>'}</td>
+      <td class="td-actions">
+        <button class="row-btn" onclick="openModal('${j.id}')">Edit</button>
+        <button class="row-btn danger" onclick="deleteJobById('${j.id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+}
+
+function filterTable() { renderTable(); }
+
+function sortBy(col) {
+  if(sortCol === col) { sortDir *= -1; }
+  else { sortCol = col; sortDir = 1; }
+  // Update arrows
+  ['company','role','status','salary','appDate','intDate'].forEach(c => {
+    const el = document.getElementById('arr-'+c);
+    if(el) el.textContent = c === sortCol ? (sortDir === 1 ? '▲' : '▼') : '';
+  });
+  renderTable();
+}
+
+// ─── Render: Stats charts ─────────────────────────────────────────────────────
+function renderStatsView() {
+  charts.forEach(c => { try { c.destroy(); } catch(e){} });
+  charts = [];
+
+  const by = {}; STATUSES.forEach(s => by[s]=0); jobs.forEach(j => by[j.status]++);
+  const sals = jobs
+    .filter(j => j.salary && j.status !== 'Rejected')
+    .map(j => ({ label: (j.company+' – '+j.role).slice(0,30), val: +j.salary }))
+    .sort((a,b) => b.val-a.val).slice(0,8);
+
+  // Update salary chart wrap height
+  const salH = Math.max(220, sals.length*44+60);
+  document.getElementById('salary-chart-wrap').style.height = salH+'px';
+
+  const c1 = document.getElementById('c-status');
+  if(c1) {
+    charts.push(new Chart(c1, {
+      type: 'doughnut',
+      data: { labels: STATUSES, datasets: [{ data: STATUSES.map(s=>by[s]), backgroundColor: CHART_COLORS, borderWidth: 2, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()||'#fff' }] },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{size:11}, padding:10, usePointStyle:true, pointStyleWidth:8 } } } }
+    }));
+  }
+
+  const c2 = document.getElementById('c-salary');
+  if(c2 && sals.length) {
+    charts.push(new Chart(c2, {
+      type: 'bar',
+      data: { labels: sals.map(s=>s.label), datasets:[{ data: sals.map(s=>s.val), backgroundColor:'#85B7EB', borderRadius:4, borderWidth:0 }] },
+      options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: v=>'£'+v.raw.toLocaleString() } } },
+        scales:{ x:{ ticks:{ callback: v=>'£'+(v/1000).toFixed(0)+'k' }, grid:{color:'rgba(128,128,128,0.08)'} }, y:{ ticks:{font:{size:11}} } }
+      }
+    }));
+  } else if(c2 && !sals.length) {
+    const ctx = c2.getContext('2d');
+    ctx.fillStyle = '#aaa';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Add jobs with salary info to see comparison', c2.offsetWidth/2||200, 110);
+  }
+}
+
+// ─── Master render ────────────────────────────────────────────────────────────
+function render() {
+  renderMetrics();
+  renderKanban();
+  if(currentView === 'table') renderTable();
+  if(currentView === 'stats') renderStatsView();
+}
+
+// ─── View switching ───────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  ['kanban','table','stats'].forEach(n => {
+    document.getElementById('v-'+n).style.display = n===v ? 'block' : 'none';
+    document.getElementById('t-'+n).classList.toggle('active', n===v);
+  });
+  if(v==='table') renderTable();
+  if(v==='stats') renderStatsView();
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function openModal(id) {
+  editId = id;
+  const j = id ? jobs.find(x=>x.id===id) : null;
+  document.getElementById('modal-title').textContent = j ? 'Edit job' : 'Add job';
+  document.getElementById('f-company').value = j?.company || '';
+  document.getElementById('f-role').value = j?.role || '';
+  document.getElementById('f-status').value = j?.status || 'Saved';
+  document.getElementById('f-salary').value = j?.salary || '';
+  document.getElementById('f-appdate').value = j?.appDate || '';
+  document.getElementById('f-intdate').value = j?.intDate || '';
+  document.getElementById('f-link').value = j?.link || '';
+  document.getElementById('f-notes').value = j?.notes || '';
+  document.getElementById('form-err').style.display = 'none';
+  document.getElementById('delete-btn').style.display = j ? 'inline-flex' : 'none';
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('f-company').focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  editId = null;
+}
+
+function overlayClick(e) { if(e.target === document.getElementById('modal-overlay')) closeModal(); }
+
+function saveJob() {
+  const company = document.getElementById('f-company').value.trim();
+  const role = document.getElementById('f-role').value.trim();
+  if(!company || !role) {
+    const err = document.getElementById('form-err');
+    err.textContent = 'Company and role are required.';
+    err.style.display = 'block';
+    return;
+  }
+  const data = {
+    company, role,
+    status: document.getElementById('f-status').value,
+    salary: document.getElementById('f-salary').value || '',
+    appDate: document.getElementById('f-appdate').value,
+    intDate: document.getElementById('f-intdate').value,
+    link: document.getElementById('f-link').value.trim(),
+    notes: document.getElementById('f-notes').value.trim()
+  };
+  if(editId) {
+    const i = jobs.findIndex(j=>j.id===editId);
+    if(i>=0) jobs[i] = { ...jobs[i], ...data };
+  } else {
+    jobs.push({ id: genId(), ...data });
+  }
+  saveJobs(); render(); closeModal();
+}
+
+function deleteCurrentJob() { if(editId) { deleteJobById(editId); closeModal(); } }
+function deleteJobById(id) { jobs = jobs.filter(j=>j.id!==id); saveJobs(); render(); }
+
+// ─── Keyboard shortcut ────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape') closeModal();
+  if((e.metaKey||e.ctrlKey) && e.key==='k') { e.preventDefault(); openModal(null); }
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+// Set today as default applied date for new jobs
+document.getElementById('f-appdate').value = new Date().toISOString().slice(0,10);
+loadJobs();
+</script>
+</body>
+</html>
